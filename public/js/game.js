@@ -1,4 +1,3 @@
-
 var gridSize = [14, 14];
 var padding = 2;
 
@@ -44,7 +43,9 @@ function buildGrid() {
             if (j < padding || j >= gridSize[1] - padding) {
                 col.setAttribute('context', 'external');
             }
-            col.addEventListener('click', () => {toggleCellState(col)});
+            col.addEventListener('click', () => {
+                toggleCellState(col)
+            });
 
             row.appendChild(col);
         }
@@ -60,24 +61,13 @@ function getCurrentState() {
             continue;
         }
 
-        // data.push({
-        //     row: parseInt(cell.getAttribute('row')),
-        //     col: parseInt(cell.getAttribute('col')),
-        //     state: cell.getAttribute('state'),
-        // });
-
-        // col,row
-        data[cell.getAttribute('row') + ',' + cell.getAttribute('col')] ={
+        data[cell.getAttribute('col') + '.' + cell.getAttribute('row')] = {
             row: parseInt(cell.getAttribute('row')),
             col: parseInt(cell.getAttribute('col')),
             state: cell.getAttribute('state'),
         };
 
-        // if (!data[parseInt(cell.getAttribute('row'))]) {
-        //     data[parseInt(cell.getAttribute('row'))] = {};
-        // }
-        // data[parseInt(cell.getAttribute('row'))][parseInt(cell.getAttribute('col'))] = cell.getAttribute('state') === 'alive' ? true : false;
-    };
+    }
     return data;
 }
 
@@ -85,22 +75,24 @@ function startWsConnection(name) {
     const socket = new WebSocket('ws://localhost:8181');
 
     socket.addEventListener('open', function (e) {
-        // socket.send(JSON.stringify({
-        //     action: 'start-game',
-        //     data: {
-        //         gridSize: gridSize
-        //     }
-        // }));
     });
 
     socket.addEventListener('message', function (e) {
-        console.log(e);
+        let parsedData = JSON.parse(e.data).data;
+        console.log(parsedData);
+        for (i = 0; i < parsedData.length; i++) {
+            var cell = parsedData[i];
+            setCellState(cell.row, cell.col, cell.state);
+        }
+
     });
+
 
     socket.addEventListener('close', function (e) {
         console.log('Connection terminated with status ' + e.code + ': ' + e.reason);
         // alert(e.reason);
     });
+
 
     let interval = setInterval(() => {
         socket.send(JSON.stringify({

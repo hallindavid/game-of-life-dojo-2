@@ -5,130 +5,75 @@ namespace App;
 class Grid
 {
     /** @var array */
-    protected $data;
-    
-    protected $newData;
-         
+    protected array $data;
+
     public function __construct(array $data)
     {
-        $data = $this->fillDeadNeighbours($data);
-        $this->setState($data);
+        $this->data = $this->fillDeadNeighbours($data['data']['grid']);
     }
-    
-    private function fillDeadNeighbours(array $data): array
-    {
-        // WIP
-        //  foreach ($data as $cell)
-        //      $this->getNeighbours();
-        
-        //         if (!isset($this->data[$x . '.' . $y])) {
-        //             $this->data[$x . '.' . $y] = ['row'=>($i-1), 'col'=>($j-1), 'state'=>'dead'];
-        //         } else {
-        //             $alive++;
-        //         }
 
-        //         $response[$x, $y] = $this->data[$x . '.' . $y];
-        //      }
-        // }
-    }
-    
     public function process(): array
     {
-        $this->newData = $this->data;
-        
-        $current_grid[x][y] = true;
-     
-        if (!isset($current_grid[x+1][y])) {
-            $current_grid[x+1][y] = false;
+        $newData = [];
+        foreach ($this->data as $index => $cell) {
+            $neighbours = $this->getAliveNeighbours($cell);
+
+            if (($cell['state'] == 'alive') && ($neighbours < 2 || $neighbours > 3)) {
+                // 1 - Any live cell with fewer than two live neighbours dies, as if by underpopulation.
+                // 3 - Any live cell with more than three live neighbours dies, as if by overpopulation.
+                $cell['state'] = 'dead';
+            } elseif (($cell['state'] == 'dead') && ($neighbours == 3)) {
+                // 4 - Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+                $cell['state'] = 'alive';
+            }
+
+            //Rule is the default scenario as state doesn't change
+
+            //2 - Any live cell with two or three live neighbours lives on to the next generation.
+
+            $newData[$index] = $cell;
         }
-        
-        // $array["2.1"]=['row'=>1, 'col'=>2, 'state'=>'alive'];
-        
-        // Loop through current data and add dead neighboring elements to current elements
-        foreach($this->data as $key => $cell) {
-            $neightbours = $this->getNeightbours($cell['row'], $cell['cell']);
-            
-            if ($cell['state']) {
-                if ($result1 !== null) {
-                    continue;
+
+        return $newData;
+    }
+
+    private function fillDeadNeighbours(array $data): array
+    {
+        foreach ($data as $cell) {
+            $row = intval($cell['row']);
+            $col = intval($cell['col']);
+
+            for ($x = $col - 1; $x <= $col + 1; $x++) {
+                for ($y = $row - 1; $y <= $row + 1; $y++) {
+                    $index = sprintf("%d.%d", $x, $y);
+                    if (!isset($data[$index])) {
+                        $data[$index] = ['row' => $y, 'col' => $x, 'state' => 'dead'];
+                    }
                 }
-            
-                if () {}
-            
-                if () {}
-            } else {
-                if () {}
             }
         }
-        
-        return $this->newData;
+        return $data;
     }
-    
-    public function setState(array $data): void
-    {
-        $this->newData = [];
-        $this->data = $data;
-    }
-    
-    private getNeightbours($i, $j): array
-    {
-        //$i = row
-        // $j = col
-        $response = [];
-        $alive = 0;
-        
-        for ($x = $i -1; $x <= $i+1; $x++) {
-             for ($y = $j-1; $y <= $j+1; $y++) {
-                  if ($x === $i && $j === y) {
-                    continue;
-                }
-        
-                if (!isset($this->data[$x . '.' . $y])) {
-                    $this->data[$x . '.' . $y] = ['row'=>($i-1), 'col'=>($j-1), 'state'=>'dead'];
-                } else {
-                    $alive++;
-                }
 
-                $response[$x, $y] = $this->data[$x . '.' . $y];
-             }
+    private function getAliveNeighbours(array $cell): int
+    {
+        $count = 0;
+
+        $row = intval($cell['row']);
+        $col = intval($cell['col']);
+
+        for ($x = $col - 1; $x <= $col + 1; $x++) {
+            for ($y = $row - 1; $y <= $row + 1; $y++) {
+                $index = sprintf("%d.%d", $x, $y);
+
+                if ($x != $col
+                    && $y != $row
+                    && ($this->data[$index]['state'] ?? 'dead') == 'alive'
+                ) {
+                    $count++;
+                }
+            }
         }
-        
-        return [
-            'grid' => $response,
-            'alive' => $alive,
-        ];
+        return $count;
     }
-
-    // Any live cell with fewer than two live neighbours dies, as if by underpopulation.
-    /**
-     * @return null|bool
-     */
-    private function rule1(i, j) {
-
-    }
-
-    // Any live cell with two or three live neighbours lives on to the next generation.
-    /**
-     * @return null|bool
-     */
-    private function rule2() {
-
-    }
-
-    // Any live cell with more than three live neighbours dies, as if by overpopulation.
-    /**
-     * @return null|bool
-     */
-    private function rule3() {
-
-    }
-    
-    // Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-    /**
-     * @return null|bool
-     */
-    private function rule4() {
-
-    }
-
 }
